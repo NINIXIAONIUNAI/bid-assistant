@@ -3,6 +3,10 @@ import { useState } from "react";
 type SubSub = { id: string; name: string };
 type Sub = { id: string; name: string; subs: SubSub[] };
 type Chapter = { id: string; name: string; pages: number; subs: Sub[] };
+type PendingDelete =
+  | { kind: "chapter"; cid: string }
+  | { kind: "sub"; cid: string; sid: string }
+  | { kind: "subSub"; cid: string; sid: string; ssid: string };
 
 const cnNums = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
 function cn(n: number): string {
@@ -125,6 +129,8 @@ export function Step3Outline({
   const [preview, setPreview] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(defaultOutline.map(c => c.id)));
   const [regenerating, setRegenerating] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [toast, setToast] = useState<null | { kind: "success" | "error"; msg: string }>(null);
 
   const showToast = (kind: "success" | "error", msg: string) => {
@@ -132,6 +138,7 @@ export function Step3Outline({
     setTimeout(() => setToast(null), 2200);
   };
   const handleRegenerate = () => {
+    setConfirmRegenerate(false);
     setRegenerating(true);
     setTimeout(() => {
       setOutline(defaultOutline);
@@ -183,6 +190,13 @@ export function Step3Outline({
     setOutline(arr => arr.map(c => c.id !== cid ? c : { ...c, subs: c.subs.filter(s => s.id !== sid) }));
   const deleteSubSub = (cid: string, sid: string, ssid: string) =>
     setOutline(arr => arr.map(c => c.id !== cid ? c : { ...c, subs: c.subs.map(s => s.id !== sid ? s : { ...s, subs: s.subs.filter(x => x.id !== ssid) }) }));
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    if (pendingDelete.kind === "chapter") deleteChapter(pendingDelete.cid);
+    if (pendingDelete.kind === "sub") deleteSub(pendingDelete.cid, pendingDelete.sid);
+    if (pendingDelete.kind === "subSub") deleteSubSub(pendingDelete.cid, pendingDelete.sid, pendingDelete.ssid);
+    setPendingDelete(null);
+  };
 
   const addSub = (cid: string) =>
     setOutline(arr => arr.map(c => c.id !== cid ? c : { ...c, subs: [...c.subs, { id: uid(), name: "新增小节", subs: [] }] }));
@@ -191,6 +205,14 @@ export function Step3Outline({
 
   return (
     <div className="max-w-7xl mx-auto px-6 pb-12">
+      <div className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-2">
+        <span className="material-symbols-outlined text-amber-600 text-[18px] leading-none mt-0.5 shrink-0">
+          info
+        </span>
+        <p className="m-0 text-sm leading-relaxed text-amber-800">
+          目录页数为系统规划参考，正文实际页数可能因生成内容、图片插入和最终排版产生差异，请以最终导出文件为准。
+        </p>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* 左：招标文件 */}
         <div className="bg-white rounded-3xl shadow-sm p-5 max-h-[680px] flex flex-col">
@@ -297,11 +319,11 @@ export function Step3Outline({
               </span>
             </div>
             <div className="flex gap-1">
-              <button onClick={handleRegenerate} disabled={regenerating} className="text-xs font-semibold text-[#191c1e]/60 hover:text-[#3B82F6] hover:bg-[#F2F4F6] px-2 py-1.5 rounded-lg flex items-center gap-1 transition-all disabled:opacity-50">
+              <button onClick={() => setConfirmRegenerate(true)} disabled={regenerating} className="text-xs font-semibold text-[#191c1e]/60 hover:text-[#3B82F6] hover:bg-[#F2F4F6] px-2 py-1.5 rounded-lg flex items-center gap-1 transition-all disabled:opacity-50">
                 <span className={"material-symbols-outlined text-[14px] " + (regenerating ? "animate-spin" : "")}>
                   refresh
                 </span>
-                {regenerating ? "生成中..." : "重新生成"}
+                {regenerating ? "生成中..." : "重新生成目录"}
               </button>
               <button onClick={handleDownload} className="text-xs font-semibold text-[#191c1e]/60 hover:text-[#3B82F6] hover:bg-[#F2F4F6] px-2 py-1.5 rounded-lg flex items-center gap-1 transition-all">
                 <span className="material-symbols-outlined text-[14px]">
@@ -355,7 +377,7 @@ export function Step3Outline({
                       <ChapterAction icon="arrow_upward" title="上移本章" disabled={ci === 0} onClick={() => move(ci, -1)} />
                       <ChapterAction icon="arrow_downward" title="下移本章" disabled={ci === outline.length - 1} onClick={() => move(ci, 1)} />
                       <ChapterAction icon="add" title="新增小节" onClick={() => { addSub(c.id); setExpanded(s => new Set(s).add(c.id)); }} />
-                      <ChapterAction icon="delete" title="删除本章" danger onClick={() => deleteChapter(c.id)} />
+                      <ChapterAction icon="delete" title="删除本章" danger onClick={() => setPendingDelete({ kind: "chapter", cid: c.id })} />
                     </div>
                   </div>
                   {open && c.subs.length > 0 && (
@@ -373,7 +395,7 @@ export function Step3Outline({
                               <ChapterAction icon="arrow_upward" small disabled={si === 0} onClick={() => moveSub(c.id, si, -1)} />
                               <ChapterAction icon="arrow_downward" small disabled={si === c.subs.length - 1} onClick={() => moveSub(c.id, si, 1)} />
                               <ChapterAction icon="add" small title="新增三级条目" onClick={() => addSubSub(c.id, s.id)} />
-                              <ChapterAction icon="delete" small danger onClick={() => deleteSub(c.id, s.id)} />
+                              <ChapterAction icon="delete" small danger onClick={() => setPendingDelete({ kind: "sub", cid: c.id, sid: s.id })} />
                             </span>
                           </div>
                           {s.subs.length > 0 && (
@@ -387,7 +409,7 @@ export function Step3Outline({
                                     className="flex-1 px-2 py-1 rounded-md text-[13px] text-[#191c1e]/75 bg-transparent hover:bg-white focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
                                   />
                                   <span className="opacity-0 group-hover/ss:opacity-100">
-                                    <ChapterAction icon="delete" small danger onClick={() => deleteSubSub(c.id, s.id, ss.id)} />
+                                    <ChapterAction icon="delete" small danger onClick={() => setPendingDelete({ kind: "subSub", cid: c.id, sid: s.id, ssid: ss.id })} />
                                   </span>
                                 </div>
                               ))}
@@ -491,6 +513,27 @@ export function Step3Outline({
         </div>
       )}
 
+      <ConfirmModal
+        open={confirmRegenerate}
+        title="重新生成目录"
+        description="重新生成后将覆盖当前目录内容。是否继续？"
+        confirmText="重新生成"
+        cancelText="取消"
+        onConfirm={handleRegenerate}
+        onCancel={() => setConfirmRegenerate(false)}
+      />
+
+      <ConfirmModal
+        open={pendingDelete !== null}
+        title="删除章节"
+        description="删除后该章节及下级目录将一并删除。是否确认删除？"
+        confirmText="确认删除"
+        cancelText="取消"
+        danger
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
       {toast && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
           <div
@@ -506,6 +549,66 @@ export function Step3Outline({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ConfirmModal({
+  open,
+  title,
+  description,
+  confirmText,
+  cancelText,
+  danger,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  description: string;
+  confirmText: string;
+  cancelText: string;
+  danger?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+        <div className="flex items-start gap-3">
+          <span
+            className={
+              "material-symbols-outlined mt-0.5 text-[22px] " +
+              (danger ? "text-[#FF4D4F]" : "text-[#3B82F6]")
+            }
+          >
+            {danger ? "warning" : "info"}
+          </span>
+          <div>
+            <h3 className="text-lg font-bold text-[#191c1e]">{title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-[#191c1e]/65">{description}</p>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-5 py-2.5 rounded-xl border border-[#ECEEF1] text-sm font-bold text-[#191c1e]/70 hover:bg-[#F7F9FC] transition-all"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={
+              "px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-sm transition-all " +
+              (danger ? "bg-[#FF4D4F] hover:bg-[#E04345]" : "bg-[#3B82F6] hover:bg-[#3F6DF0]")
+            }
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

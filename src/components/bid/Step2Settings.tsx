@@ -8,23 +8,44 @@ const bidTypes = [
 ];
 
 const chartOptions = ["无表格", "少量表格", "适量表格", "大量表格"];
-const imageOptions = ["无图片", "少量图片", "适量图片", "大量图片"];
+const bidTemplateOptions = [
+  {
+    key: "general",
+    label: "综合标书模版",
+    format: "DOCX / A4 纵向 / 商务标通用结构",
+    sections: ["封面", "目录", "投标函", "资格证明", "技术方案", "服务承诺"],
+  },
+  {
+    key: "service",
+    label: "服务类标书模版",
+    format: "DOCX / A4 纵向 / 服务方案结构",
+    sections: ["服务响应", "项目团队", "实施计划", "质量保障", "运维服务"],
+  },
+  {
+    key: "goods",
+    label: "物资类标书模版",
+    format: "DOCX / A4 纵向 / 采购响应结构",
+    sections: ["产品参数", "供货方案", "安装调试", "售后服务", "备品备件"],
+  },
+  {
+    key: "project",
+    label: "工程类标书模版",
+    format: "DOCX / A4 纵向 / 工程施工结构",
+    sections: ["施工组织", "进度计划", "质量安全", "工程量响应", "验收方案"],
+  },
+];
 
-export function Step2Settings({
-  onPrev,
-  onNext,
-}: {
-  onPrev: () => void;
-  onNext: () => void;
-}) {
+export function Step2Settings({ onPrev, onNext }: { onPrev: () => void; onNext: () => void }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("service");
   const [pages, setPages] = useState(80);
   const [chart, setChart] = useState("适量表格");
-  const [image, setImage] = useState("少量图片");
+  const [bidTemplate, setBidTemplate] = useState("general");
   const [showError, setShowError] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const canNext = name.trim().length > 0;
+  const selectedTemplate =
+    bidTemplateOptions.find((template) => template.key === bidTemplate) ?? bidTemplateOptions[0];
 
   return (
     <div className="max-w-5xl mx-auto px-8 pb-12 space-y-6">
@@ -38,9 +59,7 @@ export function Step2Settings({
             placeholder="例如：XX市政务云平台建设项目投标书"
             className={
               "w-full px-4 py-3 rounded-xl border bg-white text-sm focus:outline-none transition-all " +
-              (showError && !name
-                ? "border-[#FF4D4F]"
-                : "border-[#ECEEF1] focus:border-[#3B82F6]")
+              (showError && !name ? "border-[#FF4D4F]" : "border-[#ECEEF1] focus:border-[#3B82F6]")
             }
           />
         </Field>
@@ -84,14 +103,27 @@ export function Step2Settings({
         </Field>
       </Section>
 
-      {/* 图表设置 */}
-      <Section title="图表与配图" icon="palette">
-        <p className="text-xs text-[#191c1e]/60 -mt-2 mb-2">系统将根据设置自动插入对应图表及示意图。</p>
+      {/* 图表与模板设置 */}
+      <Section title="图表与模板" icon="palette">
+        <p className="text-xs text-[#191c1e]/60 -mt-2 mb-2">
+          系统将根据设置自动插入对应图表，并匹配标书模板结构。
+        </p>
         <Field label="表格密度">
           <RadioGroup value={chart} onChange={setChart} options={chartOptions} />
         </Field>
-        <Field label="智能配图">
-          <RadioGroup value={image} onChange={setImage} options={imageOptions} />
+        <Field label="标书模版选择">
+          <select
+            value={bidTemplate}
+            onChange={(e) => setBidTemplate(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border border-[#ECEEF1] bg-white text-sm font-semibold text-[#191c1e] focus:outline-none focus:border-[#3B82F6]"
+          >
+            {bidTemplateOptions.map((template) => (
+              <option key={template.key} value={template.key}>
+                {template.label}
+              </option>
+            ))}
+          </select>
+          <TemplatePreview template={selectedTemplate} />
         </Field>
       </Section>
 
@@ -108,8 +140,8 @@ export function Step2Settings({
           onClick={() => {
             if (!canNext) {
               setShowError(true);
-                nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                nameRef.current?.focus();
+              nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              nameRef.current?.focus();
               return;
             }
             onNext();
@@ -119,6 +151,47 @@ export function Step2Settings({
           下一步：投标资料配置
           <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
         </button>
+      </div>
+    </div>
+  );
+}
+
+function TemplatePreview({ template }: { template: (typeof bidTemplateOptions)[number] }) {
+  return (
+    <div className="mt-3 rounded-2xl border border-[#ECEEF1] bg-[#F7F9FC] p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="text-sm font-bold text-[#191c1e]">文件格式预览</div>
+          <div className="text-xs text-[#191c1e]/55 mt-0.5">{template.format}</div>
+        </div>
+        <span className="material-symbols-outlined text-[#3B82F6] text-[22px]">draft</span>
+      </div>
+      <div className="grid grid-cols-[120px_1fr] gap-4">
+        <div className="aspect-[1/1.414] rounded-lg bg-white border border-[#ECEEF1] shadow-sm p-3">
+          <div className="h-2 w-16 rounded bg-[#3B82F6]/25 mx-auto mb-4" />
+          <div className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-1.5 rounded bg-[#ECEEF1]"
+                style={{ width: `${58 + ((i * 11) % 34)}%` }}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-xs font-bold text-[#191c1e]/50 mb-2">模版章节</div>
+          <div className="flex flex-wrap gap-2">
+            {template.sections.map((section) => (
+              <span
+                key={section}
+                className="px-2.5 py-1 rounded-lg bg-white border border-[#ECEEF1] text-xs font-semibold text-[#191c1e]/70"
+              >
+                {section}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -155,7 +228,8 @@ function PageSlider({ value, onChange }: { value: number; onChange: (v: number) 
             <span className="material-symbols-outlined text-[18px]">remove</span>
           </button>
           <div className="w-16 text-center font-bold text-sm text-[#3B82F6]">
-            {value}<span className="text-xs text-[#191c1e]/50 ml-0.5">页</span>
+            {value}
+            <span className="text-xs text-[#191c1e]/50 ml-0.5">页</span>
           </div>
           <button
             onClick={() => onChange(Math.min(max, value + 10))}
@@ -205,9 +279,7 @@ function Section({
     <div className="bg-white rounded-3xl shadow-sm p-6">
       <div className="flex items-center gap-2 mb-5">
         <div className="w-9 h-9 rounded-xl bg-[#3B82F6]/10 flex items-center justify-center">
-          <span className="material-symbols-outlined text-[#3B82F6] text-[20px]">
-            {icon}
-          </span>
+          <span className="material-symbols-outlined text-[#3B82F6] text-[20px]">{icon}</span>
         </div>
         <h3 className="text-lg font-bold">
           {title}

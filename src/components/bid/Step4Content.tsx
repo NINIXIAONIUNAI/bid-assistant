@@ -52,7 +52,13 @@ const statusStyles: Record<SectionItem["status"], string> = {
   已完成: "bg-emerald-50 text-emerald-600",
 };
 
-export function Step4Content({ onPrev, status = "编写中" }: { onPrev: () => void; status?: "编写中" | "已完成" }) {
+export function Step4Content({
+  onPrev,
+  status = "编写中",
+}: {
+  onPrev: () => void;
+  status?: "编写中" | "已完成";
+}) {
   const [mode, setMode] = useState<"outline" | "content">("outline");
   const isDone = status === "已完成";
   const [chapters] = useState<Chapter[]>(isDone ? completedInitial : initial);
@@ -78,9 +84,7 @@ export function Step4Content({ onPrev, status = "编写中" }: { onPrev: () => v
               arrow_back
             </span>
           </button>
-          <span className="material-symbols-outlined text-[#3B82F6]">
-            description
-          </span>
+          <span className="material-symbols-outlined text-[#3B82F6]">description</span>
           <div>
             <div className="text-sm font-bold">XX市政务云平台建设项目投标书</div>
             <div className="text-xs text-[#191c1e]/50">草稿已保存 · 2 分钟前</div>
@@ -136,13 +140,9 @@ export function Step4Content({ onPrev, status = "编写中" }: { onPrev: () => v
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <div className="text-xs font-bold text-[#3B82F6] w-9 text-right">
-              {progress}%
-            </div>
+            <div className="text-xs font-bold text-[#3B82F6] w-9 text-right">{progress}%</div>
           </div>
-          <div className="text-xs text-[#191c1e]/50">
-            目标 {targetChars.toLocaleString()} 字
-          </div>
+          <div className="text-xs text-[#191c1e]/50">目标 {targetChars.toLocaleString()} 字</div>
         </div>
       </div>
 
@@ -187,14 +187,11 @@ function OutlineMode({ chapters }: { chapters: Chapter[] }) {
                   className="px-6 py-4 flex items-center gap-4 hover:bg-[#F7F9FC]/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-[#191c1e]">
-                      {s.title}
-                    </div>
+                    <div className="text-sm font-semibold text-[#191c1e]">{s.title}</div>
                   </div>
                   <span
                     className={
-                      "text-xs font-bold px-2.5 py-1 rounded-full " +
-                      statusStyles[s.status]
+                      "text-xs font-bold px-2.5 py-1 rounded-full " + statusStyles[s.status]
                     }
                   >
                     {s.status}
@@ -202,14 +199,9 @@ function OutlineMode({ chapters }: { chapters: Chapter[] }) {
                   <div className="text-xs text-[#191c1e]/60 w-24 text-right tabular-nums">
                     {s.current} / {s.target} 字
                   </div>
-                  <button className="text-xs font-semibold text-[#3B82F6] hover:bg-[#D4E3FF]/50 px-2 py-1 rounded-md">
-                    调整字数
-                  </button>
                   {s.status === "未编写" && (
                     <button className="text-xs font-bold text-white bg-[#3B82F6] hover:bg-[#3F6DF0] px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm">
-                      <span className="material-symbols-outlined text-[14px]">
-                        edit
-                      </span>
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
                       编写本章
                     </button>
                   )}
@@ -243,9 +235,13 @@ function ContentMode({
   onSelect: (id: string) => void;
 }) {
   const [assistantFiles, setAssistantFiles] = useState<UploadedFile[]>([]);
-  const current = chapters
-    .flatMap((c) => c.sections)
-    .find((s) => s.id === activeSection);
+  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
+  const sectionReferenceFile: UploadedFile = {
+    name: `${activeSection} 章节正文引用资料.docx`,
+    size: "860 KB",
+    status: "已完成",
+  };
+  const current = chapters.flatMap((c) => c.sections).find((s) => s.id === activeSection);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -273,8 +269,8 @@ function ContentMode({
                     (s.status === "已完成"
                       ? "bg-emerald-500"
                       : s.status === "编写中"
-                      ? "bg-[#3B82F6]"
-                      : "bg-[#191c1e]/20")
+                        ? "bg-[#3B82F6]"
+                        : "bg-[#191c1e]/20")
                   }
                 />
                 <span className="flex-1 truncate">{s.title}</span>
@@ -320,9 +316,8 @@ function ContentMode({
               className="prose prose-sm max-w-none text-sm leading-relaxed text-[#191c1e]/85 outline-none min-h-[400px]"
             >
               <p>
-                本项目旨在为 XX 市建设统一的政务云平台，整合现有分散的信息化资源，
-                提供 IaaS、PaaS、SaaS 三层服务能力，支撑全市各委办局信息系统的迁移、
-                改造与新建需求。
+                本项目旨在为 XX 市建设统一的政务云平台，整合现有分散的信息化资源， 提供
+                IaaS、PaaS、SaaS 三层服务能力，支撑全市各委办局信息系统的迁移、 改造与新建需求。
               </p>
               <p>
                 通过云平台建设，将显著提升政务信息系统的资源利用率、运维效率与
@@ -340,9 +335,7 @@ function ContentMode({
       <aside className="w-[20%] min-w-[260px] bg-white border-l border-[#ECEEF1] overflow-auto p-5">
         <div className="flex items-center gap-2 mb-5">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#6366F1] flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-[18px]">
-              auto_awesome
-            </span>
+            <span className="material-symbols-outlined text-white text-[18px]">auto_awesome</span>
           </div>
           <div>
             <div className="text-sm font-bold">AI 写作助手</div>
@@ -354,21 +347,34 @@ function ContentMode({
           <AIBtn icon="expand_content" label="扩写" />
           <AIBtn icon="compress" label="精简" />
           <AIBtn icon="autorenew" label="重写" />
-          <AIBtn icon="arrow_forward" label="继续编写" />
-        </AIGroup>
-
-        <AIGroup title="智能生成">
-          <AIBtn icon="lightbulb" label="插入案例" />
-          <AIBtn icon="account_tree" label="生成流程图" />
-          <AIBtn icon="table_chart" label="生成表格" />
-        </AIGroup>
-
-        <AIGroup title="图片">
-          <AIBtn icon="search" label="搜索图片" />
-          <AIBtn icon="upload" label="上传本地" />
+          <AIBtn icon="add_photo_alternate" label="上传本地图片" />
         </AIGroup>
 
         <div className="mt-5">
+          <div className="mb-3">
+            <div className="text-[10px] font-bold text-[#191c1e]/40 uppercase tracking-wider mb-2 px-1">
+              该章节正文引用的文件
+            </div>
+            <button
+              onClick={() => setPreviewFile(sectionReferenceFile)}
+              className="w-full rounded-2xl border border-[#D4E3FF] bg-[#EEF4FF] px-3 py-2.5 text-left flex items-center gap-2 hover:border-[#3B82F6]/60 transition-all"
+            >
+              <span className="material-symbols-outlined text-[#3B82F6] text-[18px]">
+                description
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-[#191c1e] truncate">
+                  {sectionReferenceFile.name}
+                </div>
+                <div className="text-[10px] text-[#191c1e]/50">
+                  {sectionReferenceFile.size} · 点击预览
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-[#191c1e]/35 text-[16px]">
+                visibility
+              </span>
+            </button>
+          </div>
           <div className="text-[10px] font-bold text-[#191c1e]/40 uppercase tracking-wider mb-2 px-1">
             上传文件
           </div>
@@ -377,10 +383,12 @@ function ContentMode({
               files={assistantFiles}
               onChange={setAssistantFiles}
               hint="补充参考资料"
+              onPreview={setPreviewFile}
             />
           </div>
         </div>
       </aside>
+      {previewFile && <LightFilePreview file={previewFile} onClose={() => setPreviewFile(null)} />}
     </div>
   );
 }
@@ -402,5 +410,38 @@ function AIBtn({ icon, label }: { icon: string; label: string }) {
       <span className="material-symbols-outlined text-[20px]">{icon}</span>
       <span className="text-[11px] font-semibold">{label}</span>
     </button>
+  );
+}
+
+function LightFilePreview({ file, onClose }: { file: UploadedFile; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-[#ECEEF1] overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#ECEEF1] flex items-center justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-[#191c1e] truncate">{file.name}</div>
+            <div className="text-xs text-[#191c1e]/50">{file.size} · 轻预览</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg hover:bg-[#F2F4F6] flex items-center justify-center"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+        <div className="p-5 bg-[#F7F9FC]">
+          <div className="rounded-xl bg-white border border-[#ECEEF1] p-4 space-y-3">
+            <div className="h-2 rounded bg-[#3B82F6]/20 w-2/3" />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-2 rounded bg-[#ECEEF1]"
+                style={{ width: `${50 + ((i * 17) % 42)}%` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

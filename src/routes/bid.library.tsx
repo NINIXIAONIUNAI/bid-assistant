@@ -5,12 +5,14 @@ import {
   mockCerts,
   mockStaff,
   mockCases,
+  mockFinancials,
   mockTemplates,
   mockHistory,
   mockCompany,
   type KbCert,
   type KbStaff,
   type KbCase,
+  type KbFinancial,
 } from "@/lib/mockKb";
 
 export const Route = createFileRoute("/bid/library")({
@@ -23,6 +25,7 @@ const cats = [
   { key: "certs", label: "资质证书", icon: "verified" },
   { key: "staff", label: "人员信息", icon: "groups" },
   { key: "cases", label: "类似业绩", icon: "stars" },
+  { key: "financials", label: "财务状况", icon: "account_balance_wallet" },
   { key: "templates", label: "方案模板", icon: "description" },
   { key: "history", label: "历史标书", icon: "history" },
 ] as const;
@@ -104,13 +107,36 @@ function Library() {
           {cat === "home" && <HomePage onJump={setCat} />}
           {cat === "company" && <CompanyPage onSave={() => showToast("企业信息已保存")} />}
           {cat === "certs" && (
-            <CertsPage search={search} onDelete={(c) => setConfirmDelete({ name: c.name, cb: () => showToast(`已删除 ${c.name}`) })} />
+            <CertsPage
+              search={search}
+              onDelete={(c) =>
+                setConfirmDelete({ name: c.name, cb: () => showToast(`已删除 ${c.name}`) })
+              }
+            />
           )}
           {cat === "staff" && (
-            <StaffPage search={search} onDelete={(s) => setConfirmDelete({ name: s.name, cb: () => showToast(`已删除 ${s.name}`) })} />
+            <StaffPage
+              search={search}
+              onDelete={(s) =>
+                setConfirmDelete({ name: s.name, cb: () => showToast(`已删除 ${s.name}`) })
+              }
+            />
           )}
           {cat === "cases" && (
-            <CasesPage search={search} onDelete={(k) => setConfirmDelete({ name: k.name, cb: () => showToast(`已删除 ${k.name}`) })} />
+            <CasesPage
+              search={search}
+              onDelete={(k) =>
+                setConfirmDelete({ name: k.name, cb: () => showToast(`已删除 ${k.name}`) })
+              }
+            />
+          )}
+          {cat === "financials" && (
+            <FinancialsPage
+              search={search}
+              onDelete={(f) =>
+                setConfirmDelete({ name: f.name, cb: () => showToast(`已删除 ${f.name}`) })
+              }
+            />
           )}
           {cat === "templates" && <TemplatesPage search={search} onToast={showToast} />}
           {cat === "history" && <HistoryPage search={search} onToast={showToast} />}
@@ -121,14 +147,29 @@ function Library() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
             <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-[#FF4D4F] text-[24px]">delete_forever</span>
+              <span className="material-symbols-outlined text-[#FF4D4F] text-[24px]">
+                delete_forever
+              </span>
             </div>
             <h3 className="text-lg font-bold mb-2">确认删除？</h3>
             <p className="text-sm text-[#191c1e]/70">即将删除《{confirmDelete.name}》。</p>
             <p className="text-sm text-[#FF4D4F] mb-6">删除后将无法恢复，请谨慎操作。</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-3 rounded-xl border border-[#ECEEF1] text-sm font-bold text-[#191c1e]/70 hover:bg-[#F7F9FC]">取消</button>
-              <button onClick={() => { confirmDelete.cb(); setConfirmDelete(null); }} className="flex-1 py-3 rounded-xl bg-[#FF4D4F] text-white text-sm font-bold hover:bg-[#e84446]">确认删除</button>
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-3 rounded-xl border border-[#ECEEF1] text-sm font-bold text-[#191c1e]/70 hover:bg-[#F7F9FC]"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  confirmDelete.cb();
+                  setConfirmDelete(null);
+                }}
+                className="flex-1 py-3 rounded-xl bg-[#FF4D4F] text-white text-sm font-bold hover:bg-[#e84446]"
+              >
+                确认删除
+              </button>
             </div>
           </div>
         </div>
@@ -164,16 +205,54 @@ function Library() {
 function HomePage({ onJump }: { onJump: (c: CatKey) => void }) {
   const stats: { key: CatKey; label: string; value: string; icon: string; color: string }[] = [
     { key: "company", label: "企业信息", value: "已完善", icon: "business", color: "#3B82F6" },
-    { key: "certs", label: "资质证书", value: `${mockCerts.length} 份`, icon: "verified", color: "#10B981" },
-    { key: "staff", label: "人员信息", value: `${mockStaff.length} 人`, icon: "groups", color: "#6366F1" },
-    { key: "cases", label: "类似业绩", value: `${mockCases.length} 项`, icon: "stars", color: "#F59E0B" },
-    { key: "templates", label: "方案模板", value: `${mockTemplates.length} 份`, icon: "description", color: "#EF4444" },
-    { key: "history", label: "历史标书", value: `${mockHistory.length} 份`, icon: "history", color: "#0EA5E9" },
+    {
+      key: "certs",
+      label: "资质证书",
+      value: `${mockCerts.length} 份`,
+      icon: "verified",
+      color: "#10B981",
+    },
+    {
+      key: "staff",
+      label: "人员信息",
+      value: `${mockStaff.length} 人`,
+      icon: "groups",
+      color: "#6366F1",
+    },
+    {
+      key: "cases",
+      label: "类似业绩",
+      value: `${mockCases.length} 项`,
+      icon: "stars",
+      color: "#F59E0B",
+    },
+    {
+      key: "financials",
+      label: "财务状况",
+      value: `${mockFinancials.length} 份`,
+      icon: "account_balance_wallet",
+      color: "#14B8A6",
+    },
+    {
+      key: "templates",
+      label: "方案模板",
+      value: `${mockTemplates.length} 份`,
+      icon: "description",
+      color: "#EF4444",
+    },
+    {
+      key: "history",
+      label: "历史标书",
+      value: `${mockHistory.length} 份`,
+      icon: "history",
+      color: "#0EA5E9",
+    },
   ];
   const recent = [
     "长沙市中心医院信息化监理",
     "ISO9001 质量管理体系认证",
     "信息化项目监理服务方案",
+    "近三年财务状况汇总",
     "张三（总监理工程师）",
   ];
   return (
@@ -186,10 +265,17 @@ function HomePage({ onJump }: { onJump: (c: CatKey) => void }) {
             className="bg-white rounded-2xl shadow-sm p-5 text-left hover:shadow-md hover:-translate-y-0.5 transition-all"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: s.color + "14" }}>
-                <span className="material-symbols-outlined text-[20px]" style={{ color: s.color }}>{s.icon}</span>
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: s.color + "14" }}
+              >
+                <span className="material-symbols-outlined text-[20px]" style={{ color: s.color }}>
+                  {s.icon}
+                </span>
               </div>
-              <span className="material-symbols-outlined text-[#191c1e]/30 text-[18px]">arrow_outward</span>
+              <span className="material-symbols-outlined text-[#191c1e]/30 text-[18px]">
+                arrow_outward
+              </span>
             </div>
             <div className="text-sm text-[#191c1e]/60 font-semibold">{s.label}</div>
             <div className="text-xl font-extrabold text-[#191c1e] mt-1">{s.value}</div>
@@ -203,8 +289,13 @@ function HomePage({ onJump }: { onJump: (c: CatKey) => void }) {
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {recent.map((r) => (
-            <div key={r} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#F7F9FC] text-sm">
-              <span className="material-symbols-outlined text-[#191c1e]/40 text-[14px]">bookmark</span>
+            <div
+              key={r}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#F7F9FC] text-sm"
+            >
+              <span className="material-symbols-outlined text-[#191c1e]/40 text-[14px]">
+                bookmark
+              </span>
               <span className="text-[#191c1e]/80">{r}</span>
             </div>
           ))}
@@ -227,23 +318,74 @@ function CompanyPage({ onSave }: { onSave: () => void }) {
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-lg font-bold">企业信息</h3>
         {edit ? (
-          <button onClick={() => { setEdit(false); onSave(); }} className="px-4 py-2 rounded-xl bg-[#3B82F6] text-white text-sm font-bold hover:bg-[#3F6DF0]">保存</button>
+          <button
+            onClick={() => {
+              setEdit(false);
+              onSave();
+            }}
+            className="px-4 py-2 rounded-xl bg-[#3B82F6] text-white text-sm font-bold hover:bg-[#3F6DF0]"
+          >
+            保存
+          </button>
         ) : (
-          <button onClick={() => setEdit(true)} className="px-4 py-2 rounded-xl border border-[#ECEEF1] text-sm font-bold text-[#191c1e]/70 hover:bg-[#F7F9FC] flex items-center gap-1">
+          <button
+            onClick={() => setEdit(true)}
+            className="px-4 py-2 rounded-xl border border-[#ECEEF1] text-sm font-bold text-[#191c1e]/70 hover:bg-[#F7F9FC] flex items-center gap-1"
+          >
             <span className="material-symbols-outlined text-[14px]">edit</span>编辑
           </button>
         )}
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="企业名称" value={data.name} edit={edit} onChange={(v) => setData({ ...data, name: v })} />
-        <Field label="统一社会信用代码" value={data.uscc} edit={edit} onChange={(v) => setData({ ...data, uscc: v })} />
-        <Field label="主营业务" value={data.business} edit={edit} onChange={(v) => setData({ ...data, business: v })} full />
-        <Field label="企业简介" value={data.intro} edit={edit} onChange={(v) => setData({ ...data, intro: v })} full multiline />
-        <Field label="LOGO" value={data.logo} edit={edit} onChange={(v) => setData({ ...data, logo: v })} placeholder="上传 LOGO" />
-        <Field label="组织架构图" value={data.org} edit={edit} onChange={(v) => setData({ ...data, org: v })} placeholder="上传组织架构图" />
+        <Field
+          label="企业名称"
+          value={data.name}
+          edit={edit}
+          onChange={(v) => setData({ ...data, name: v })}
+        />
+        <Field
+          label="统一社会信用代码"
+          value={data.uscc}
+          edit={edit}
+          onChange={(v) => setData({ ...data, uscc: v })}
+        />
+        <Field
+          label="主营业务"
+          value={data.business}
+          edit={edit}
+          onChange={(v) => setData({ ...data, business: v })}
+          full
+        />
+        <Field
+          label="企业简介"
+          value={data.intro}
+          edit={edit}
+          onChange={(v) => setData({ ...data, intro: v })}
+          full
+          multiline
+        />
+        <Field
+          label="LOGO"
+          value={data.logo}
+          edit={edit}
+          onChange={(v) => setData({ ...data, logo: v })}
+          placeholder="上传 LOGO"
+        />
+        <Field
+          label="组织架构图"
+          value={data.org}
+          edit={edit}
+          onChange={(v) => setData({ ...data, org: v })}
+          placeholder="上传组织架构图"
+        />
         <div className="col-span-2">
           <div className="text-xs font-semibold text-[#191c1e]/60 mb-1.5">营业执照</div>
-          <UploadZone files={licenseFiles} onChange={setLicenseFiles} hint="上传营业执照 PDF / 图片" multiple={false} />
+          <UploadZone
+            files={licenseFiles}
+            onChange={setLicenseFiles}
+            hint="上传营业执照 PDF / 图片"
+            multiple={false}
+          />
         </div>
       </div>
       <div className="mt-5 text-xs text-[#191c1e]/50 flex items-center gap-1.5">
@@ -277,11 +419,18 @@ function KbUploadDialog({
       <div className="bg-white rounded-3xl w-full max-w-xl max-h-[86vh] overflow-auto shadow-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">{title}</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-[#F2F4F6] flex items-center justify-center">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg hover:bg-[#F2F4F6] flex items-center justify-center"
+          >
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
-        <UploadZone files={files} onChange={onFilesChange} hint="支持 PDF / Word / Excel / 图片，上传后将自动解析" />
+        <UploadZone
+          files={files}
+          onChange={onFilesChange}
+          hint="支持 PDF / Word / Excel / 图片，上传后将自动解析"
+        />
         <label className="mt-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F7F9FC] text-sm font-semibold text-[#191c1e]/75 cursor-pointer">
           <input
             type="checkbox"
@@ -292,7 +441,10 @@ function KbUploadDialog({
           同步保存至知识库
         </label>
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-[#ECEEF1] text-sm font-bold text-[#191c1e]/70 hover:bg-[#F7F9FC]">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 rounded-xl border border-[#ECEEF1] text-sm font-bold text-[#191c1e]/70 hover:bg-[#F7F9FC]"
+          >
             取消
           </button>
           <button
@@ -308,15 +460,40 @@ function KbUploadDialog({
   );
 }
 
-function Field({ label, value, edit, onChange, full, multiline, placeholder }: { label: string; value: string; edit: boolean; onChange: (v: string) => void; full?: boolean; multiline?: boolean; placeholder?: string }) {
+function Field({
+  label,
+  value,
+  edit,
+  onChange,
+  full,
+  multiline,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  edit: boolean;
+  onChange: (v: string) => void;
+  full?: boolean;
+  multiline?: boolean;
+  placeholder?: string;
+}) {
   return (
     <div className={full ? "col-span-2" : ""}>
       <div className="text-xs font-semibold text-[#191c1e]/60 mb-1.5">{label}</div>
       {edit ? (
         multiline ? (
-          <textarea value={value} onChange={(e) => onChange(e.target.value)} className="w-full h-24 px-3 py-2 rounded-xl border border-[#ECEEF1] bg-[#F7F9FC] text-sm focus:outline-none focus:border-[#3B82F6] focus:bg-white resize-none" />
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full h-24 px-3 py-2 rounded-xl border border-[#ECEEF1] bg-[#F7F9FC] text-sm focus:outline-none focus:border-[#3B82F6] focus:bg-white resize-none"
+          />
         ) : (
-          <input value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#ECEEF1] bg-[#F7F9FC] text-sm focus:outline-none focus:border-[#3B82F6] focus:bg-white" />
+          <input
+            value={value}
+            placeholder={placeholder}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl border border-[#ECEEF1] bg-[#F7F9FC] text-sm focus:outline-none focus:border-[#3B82F6] focus:bg-white"
+          />
         )
       ) : (
         <div className="px-3 py-2 rounded-xl bg-[#F7F9FC] text-sm text-[#191c1e]/80 min-h-[36px]">
@@ -338,7 +515,13 @@ function CertsPage({ search, onDelete }: { search: string; onDelete: (c: KbCert)
           <span className="font-semibold text-[#191c1e]">{c.name}</span>,
           <span className="text-[#191c1e]/70">{c.code}</span>,
           <span className="text-[#191c1e]/70">{c.issuer}</span>,
-          <span className={c.status === "即将过期" ? "text-amber-600 font-semibold" : "text-[#191c1e]/70"}>{c.expiry}</span>,
+          <span
+            className={
+              c.status === "即将过期" ? "text-amber-600 font-semibold" : "text-[#191c1e]/70"
+            }
+          >
+            {c.expiry}
+          </span>,
           <StatusBadge status={c.status} />,
         ],
         onDelete: () => onDelete(c),
@@ -353,11 +536,15 @@ function StatusBadge({ status }: { status: KbCert["status"] }) {
     即将过期: "bg-amber-50 text-amber-600",
     已过期: "bg-red-50 text-[#FF4D4F]",
   };
-  return <span className={"text-[11px] font-bold px-2 py-0.5 rounded-full " + m[status]}>{status}</span>;
+  return (
+    <span className={"text-[11px] font-bold px-2 py-0.5 rounded-full " + m[status]}>{status}</span>
+  );
 }
 
 function StaffPage({ search, onDelete }: { search: string; onDelete: (s: KbStaff) => void }) {
-  const data = mockStaff.filter((s) => !search || s.name.includes(search) || s.role.includes(search));
+  const data = mockStaff.filter(
+    (s) => !search || s.name.includes(search) || s.role.includes(search),
+  );
   return (
     <KbTable
       head={["姓名", "岗位", "联系电话", "工作年限", "证书数量"]}
@@ -391,6 +578,35 @@ function CasesPage({ search, onDelete }: { search: string; onDelete: (k: KbCase)
           <span className="text-[#191c1e]/70">{k.date}</span>,
         ],
         onDelete: () => onDelete(k),
+      }))}
+    />
+  );
+}
+
+function FinancialsPage({
+  search,
+  onDelete,
+}: {
+  search: string;
+  onDelete: (f: KbFinancial) => void;
+}) {
+  const data = mockFinancials.filter(
+    (f) => !search || f.name.includes(search) || f.period.includes(search),
+  );
+  return (
+    <KbTable
+      head={["资料名称", "期间", "营业收入", "净利润", "资产负债率", "更新时间"]}
+      rows={data.map((f) => ({
+        id: f.id,
+        cells: [
+          <span className="font-semibold text-[#191c1e]">{f.name}</span>,
+          <span className="text-[#191c1e]/70">{f.period}</span>,
+          <span className="font-semibold text-[#191c1e]">{f.revenue}</span>,
+          <span className="font-semibold text-[#191c1e]">{f.netProfit}</span>,
+          <span className="text-[#191c1e]/70">{f.debtRatio}</span>,
+          <span className="text-[#191c1e]/70">{f.updated}</span>,
+        ],
+        onDelete: () => onDelete(f),
       }))}
     />
   );
@@ -431,12 +647,20 @@ function HistoryPage({ search, onToast }: { search: string; onToast: (m: string)
   );
 }
 
-function KbTable({ head, rows }: { head: string[]; rows: { id: string; cells: React.ReactNode[]; onDelete: () => void }[] }) {
+function KbTable({
+  head,
+  rows,
+}: {
+  head: string[];
+  rows: { id: string; cells: React.ReactNode[]; onDelete: () => void }[];
+}) {
   return (
     <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
       {rows.length === 0 ? (
         <div className="text-center py-16 text-[#191c1e]/50">
-          <span className="material-symbols-outlined text-[40px] text-[#191c1e]/20 block mb-2">inbox</span>
+          <span className="material-symbols-outlined text-[40px] text-[#191c1e]/20 block mb-2">
+            inbox
+          </span>
           暂无资料，点击右上角"新增资料"
         </div>
       ) : (
@@ -444,7 +668,9 @@ function KbTable({ head, rows }: { head: string[]; rows: { id: string; cells: Re
           <thead>
             <tr className="bg-[#F7F9FC] text-[12px] font-bold text-[#191c1e]/60 uppercase tracking-wider">
               {head.map((h) => (
-                <th key={h} className="text-left px-5 py-3.5">{h}</th>
+                <th key={h} className="text-left px-5 py-3.5">
+                  {h}
+                </th>
               ))}
               <th className="text-right px-5 py-3.5">操作</th>
             </tr>
@@ -453,7 +679,9 @@ function KbTable({ head, rows }: { head: string[]; rows: { id: string; cells: Re
             {rows.map((r) => (
               <tr key={r.id} className="border-t border-[#F2F4F6] hover:bg-[#F7F9FC]/60">
                 {r.cells.map((c, i) => (
-                  <td key={i} className="px-5 py-3.5 text-sm">{c}</td>
+                  <td key={i} className="px-5 py-3.5 text-sm">
+                    {c}
+                  </td>
                 ))}
                 <td className="px-5 py-3.5 text-right">
                   <div className="inline-flex items-center gap-1">
@@ -471,9 +699,28 @@ function KbTable({ head, rows }: { head: string[]; rows: { id: string; cells: Re
   );
 }
 
-function Icn({ icon, title, danger, onClick }: { icon: string; title: string; danger?: boolean; onClick?: () => void }) {
+function Icn({
+  icon,
+  title,
+  danger,
+  onClick,
+}: {
+  icon: string;
+  title: string;
+  danger?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <button onClick={onClick} title={title} className={"w-7 h-7 rounded-md flex items-center justify-center " + (danger ? "text-[#191c1e]/50 hover:bg-red-50 hover:text-[#FF4D4F]" : "text-[#191c1e]/50 hover:bg-[#F2F4F6] hover:text-[#3B82F6]")}>
+    <button
+      onClick={onClick}
+      title={title}
+      className={
+        "w-7 h-7 rounded-md flex items-center justify-center " +
+        (danger
+          ? "text-[#191c1e]/50 hover:bg-red-50 hover:text-[#FF4D4F]"
+          : "text-[#191c1e]/50 hover:bg-[#F2F4F6] hover:text-[#3B82F6]")
+      }
+    >
       <span className="material-symbols-outlined text-[16px]">{icon}</span>
     </button>
   );
